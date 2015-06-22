@@ -272,7 +272,7 @@ action validate_syn_cookie() {
 table syn_auth {
     reads {
         l3_metadata.lkp_ip_proto : exact;
-        tcp.ctrl : exact; // tcp syn or ack
+        tcp.flag : exact; // tcp syn or ack
     }
     actions {
         drop_packet;           //other packets
@@ -297,7 +297,7 @@ action l4l_syn_cookie_learn() {
 
 table seq_auth {
     reads {
-        tcp.ctrl : exact;
+        tcp.flag : exact;
         tcp.ackNo : exact;
     }
     actions {
