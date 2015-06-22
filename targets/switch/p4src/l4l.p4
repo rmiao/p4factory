@@ -24,12 +24,14 @@ limitations under the License.
 #define L4L_CONNECTION_LEARN_TYPE              4
 #define L4L_WHITELIST_LEARN_TYPE               5
 #define TCP_SEQNUM_WIDTH                       32
+#define LEARN_RECEIVER                         0
 
 /*
  * L4L metadata
  */
  header_type l4l_metadata_t {
      fields {
+     	    learn_type : 3;                        /* learning type */
             trusted : 1;                           /* flag indicating whether src is trusted */
             vip_traffic : 1;                       /* flag indicating VIP traffic */
             dippool_index : 10;                    /* dip-pool index */
@@ -130,6 +132,18 @@ table vip {
     size : VIP_TABLE_SIZE;
 }
 
+
+
+field_list conn_level_hash_fields {
+    ipv4_metadata.lkp_ipv4_sa;
+    ipv4_metadata.lkp_ipv4_da;
+    l3_metadata.lkp_ip_proto;
+    ingress_metadata.lkp_l4_sport;
+    ingress_metadata.lkp_l4_dport;
+}
+
+
+
 field_list_calculation l4l_hash {
     input {
         conn_level_hash_fields;
@@ -228,7 +242,7 @@ action generate_syn_cookie() {
     // NOTE: sequential exec semantics
     add(tcp.ackNo, tcp.seqNo, 1);
     modify_field_with_hash_based_offset(tcp.seqNo, 0, syn_cookie_hash, 65536);
-    modify_field(tcp.ctrl, 18); // SYN-ACK
+    modify_field(tcp.flags, 18); // SYN-ACK
     
     modify_field(l4l_metadata.temp16b, ingress_metadata.lkp_l4_sport);
     modify_field(ingress_metadata.lkp_l4_sport, ingress_metadata.lkp_l4_dport);
