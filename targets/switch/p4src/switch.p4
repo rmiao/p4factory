@@ -191,6 +191,36 @@ control ingress {
                     process_ipv4_racl();
 
                     process_ipv4_urpf();
+
+#ifndef L4L_DISABLE
+		    /* connection table look-up */
+                    apply(l4_connections) { 
+                        on_miss {
+                            apply(vip);    /* check VIP-DIP mapping */
+                            if (l4l_metadata.vip_traffic == TRUE) {
+               
+                                apply(src_whitelist);   /* maintaining a white-list of src */
+                                            
+                                if (l4l_metadata.trusted == TRUE) {
+                                            
+                                    apply(dip_pool);
+                                    apply(l4_rewrite_and_learn);
+                                                
+                                } else {
+                                            
+                                    /* perform syn-cookie authorization */
+                                    apply(syn_auth);
+                                    apply(seq_auth);
+                                               
+                                } 
+		 	    }
+                        }
+                    }
+#endif /* L4L_DISABLE */
+
+
+
+
                     process_ipv4_fib();
 
                 } else {
